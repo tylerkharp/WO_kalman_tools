@@ -177,48 +177,6 @@ class runData:
         ds = self.timeZero(ds)
         return disp,ds
     
-    # def apply_encoder_flip(self):
-    #     s_refL = self.integrateV(self.v_refL) 
-    #     s_refR = self.integrateV(self.v_refR) 
-    #     s_refL_max = s_refL['s'].abs().max()
-    #     s_refR_max = s_refR['s'].abs().max()
-    #     s_ref_max = (s_refL_max + s_refR_max) / 2 
-    #     threshold = 0.5
-    #     is_wbl_flipped = abs(((s_refL['s'] - (self.s_wbl['s'] - self.absolute_height_offset)) / s_ref_max).mean()) >= threshold
-    #     is_wbr_flipped = abs(((s_refR['s'] - (self.s_wbr['s'] - self.absolute_height_offset)) / s_ref_max).mean()) >= threshold
-    #     is_mlf_flipped = abs(((s_refL['s'] - (self.s_mlf['s'] - self.absolute_height_offset)) / s_ref_max).mean()) >= threshold
-    #     is_mlb_flipped = abs(((s_refL['s'] - (self.s_mlb['s'] - self.absolute_height_offset)) / s_ref_max).mean()) >= threshold
-    #     is_mrf_flipped = abs(((s_refR['s'] - (self.s_mrf['s'] - self.absolute_height_offset)) / s_ref_max).mean()) >= threshold
-    #     is_mrb_flipped = abs(((s_refR['s'] - (self.s_mrb['s'] - self.absolute_height_offset)) / s_ref_max).mean()) >= threshold
-    #     # print(abs(((s_refL['s'] - (self.s_mlb['s'] - self.absolute_height_offset)) / s_ref_max).mean()))
-    #     # print(abs(((s_refL['s'] - (self.s_mlf['s'] - self.absolute_height_offset)) / s_ref_max).mean()))
-    #     # print(abs(((s_refR['s'] - (self.s_mrf['s'] - self.absolute_height_offset)) / s_ref_max).mean()))
-    #     # print(abs(((s_refR['s'] - (self.s_mrb['s'] - self.absolute_height_offset)) / s_ref_max).mean()))
-    #     # print(abs(((s_refL['s'] - (self.s_wbl['s'] - self.absolute_height_offset)) / s_ref_max).mean()))
-    #     # print(abs(((s_refR['s'] - (self.s_wbr['s'] - self.absolute_height_offset)) / s_ref_max).mean()))
-
-    #     if is_wbl_flipped:
-    #         self.ds_wbl['ds'] = self.ds_wbl['ds'].multiply(-1)  
-    #         self.s_wbl['s'] = self.integrateS(self.ds_wbl)['s'] + self.absolute_height_offset
-    #     if is_wbr_flipped:
-    #         self.ds_wbr['ds'] = self.ds_wbr['ds'].multiply(-1)
-    #         self.s_wbr['s'] = self.integrateS(self.ds_wbr)['s'] + self.absolute_height_offset
-    #     if is_mlf_flipped:
-    #         self.ds_mlf['ds'] = self.ds_mlf['ds'].multiply(-1)
-    #         self.s_mlf['s'] = self.integrateS(self.ds_mlf)['s'] + self.absolute_height_offset
-    #     if is_mlb_flipped:
-    #         self.ds_mlb['ds'] = self.ds_mlb['ds'].multiply(-1)
-    #         self.s_mlb['s'] = self.integrateS(self.ds_mlb)['s'] + self.absolute_height_offset
-    #     if is_mrf_flipped:
-    #         self.ds_mrf['ds'] = self.ds_mrf['ds'].multiply(-1)
-    #         self.s_mrf['s'] = self.integrateS(self.ds_mrf)['s'] + self.absolute_height_offset
-    #     if is_mrb_flipped:
-    #         self.ds_mrb['ds'] = self.ds_mrb['ds'].multiply(-1)
-    #         self.s_mrb['s'] = self.integrateS(self.ds_mrb)['s'] + self.absolute_height_offset 
-
-
-        
-
     def set_absolute_height_offset(self):
         if self.operator_height_offset != 0:
             self.absolute_height_offset = self.data['/brain_outputs/robot_position_ft'].iloc[0] - self.operator_height_offset
@@ -322,7 +280,6 @@ class runData:
             df = self.timeZero(df)
             return df,t0
         
-
     def integrateS(self,df):
         displacements = np.zeros(df.shape)
         displacements = pd.DataFrame(displacements, columns=['time','s'])
@@ -360,17 +317,6 @@ class runData:
         if span != 1:
             vels = self.smooth(vels,'vel',span)
         return vels
-    
-    def v_to_a(self,v,span):
-        accels = self.copydfShape(v,0)
-        accels = accels.rename(columns={'vel':'accel'})
-        accels['time'] = v['time']
-        dt = v['time'].diff()
-        dv = v['vel'].diff()
-        accels['accel'] = dv/dt
-        accels['accel'][0] = 0
-        accels = self.smooth(accels,'accel',span)
-        return accels
 
     def smooth(self,data,type,span):
         length = len(data)
@@ -406,9 +352,6 @@ class runData:
             closest = changePts.iloc[(changePts['time']-refTime).abs().argsort()[:1]].astype('float')
             correction.iloc[i,:] = closest
         return correction
-    
-    def KFerrorAnalysis(self,section):
-        self.KFerrMean = self.errorAnalysis(self.rts,self.kalman,section)[1]
 
     def KvcerrorAnalysis(self,section):
         self.KvcErrPeak,self.KvcErrMean,self.KvcErrSTD = self.errorAnalysis(self.rts,self.Kvc,section)
@@ -468,24 +411,6 @@ class runData:
         offset = offset.reset_index(drop=True)
         offset = offset.drop(offset.index[len(data):-1])
         return offset
-
-    def applyAKF(self,Q,Rm,Rwb,g_scale):
-        self.kalmanR = self.AKF(self.v_refR,self.ds_mrf,self.ds_mrb,self.ds_wbr,Q,Rm,Rwb,g_scale)
-        self.kalmanL = self.AKF(self.v_refL,self.ds_mlf,self.ds_mlb,self.ds_wbl,Q,Rm,Rwb,g_scale)
-        self.kalmanL['vel'] =  self.smooth(pd.concat([self.kalmanL['time'],self.kalmanL['vel']],axis=1),'vel',30)['vel']
-        self.kalmanR['vel'] =  self.smooth(pd.concat([self.kalmanR['time'],self.kalmanR['vel']],axis=1),'vel',30)['vel']  
-        self.kalman = (self.kalmanL+self.kalmanR)/2
-        self.kalman['vel'] =  self.smooth(pd.concat([self.kalman['time'],self.kalman['vel']],axis=1),'vel',30)['vel']
-        self.kalman.columns = ['time','s','vel','verr_m','verr_wb']
-
-    def applyKF(self,Q,Rm,Rwb,g_scale):
-        self.kalmanR = self.Kalman(self.v_refR,self.ds_mrf,self.ds_mrb,self.ds_wbr,Q,Rm,Rwb,g_scale)
-        self.kalmanL = self.Kalman(self.v_refL,self.ds_mlf,self.ds_mlb,self.ds_wbl,Q,Rm,Rwb,g_scale)
-        self.kalmanL['vel'] =  self.smooth(pd.concat([self.kalmanL['time'],self.kalmanL['vel']],axis=1),'vel',30)['vel']
-        self.kalmanR['vel'] =  self.smooth(pd.concat([self.kalmanR['time'],self.kalmanR['vel']],axis=1),'vel',30)['vel']  
-        self.kalman = (self.kalmanL+self.kalmanR)/2
-        self.kalman['vel'] =  self.smooth(pd.concat([self.kalman['time'],self.kalman['vel']],axis=1),'vel',30)['vel']
-        self.kalman.columns = ['time','s','vel']
     
     def applyKVC(self,Q,Rm,Rwb,g_scale,span):
         self.KvcR = self.KVC(self.v_refR,self.ds_mrf,self.ds_mrb,self.ds_wbr,Q,Rm,Rwb,g_scale)
@@ -519,6 +444,10 @@ class runData:
 
 
     def KVC(self,v_ref,ds_f,ds_c,ds_b,Q,Rm,Rwb,g_scale):
+            '''
+            Final Kalman Filter that compensates for velocity errors in all encoders and fuses them together. Meant to be used for one
+            side of the robot, filtering 2 motor encoders and 1 wheelie bar encoder'''
+
             if self.units == 'm':
                 motor_velocity_threshold = 0.01
                 motor_difference_threshold = 0.01
@@ -614,9 +543,7 @@ class runData:
                             # print(time[i],m_diff,'wb & motor diff')
                             gainM = np.zeros((2,2)) 
                             gainWB = Ppred*H.T*inv(H*Ppred*H.T + 2*Rwb)
-                        # elif abs(v_b) > wheeliebar_velocity_threshold or (abs(v_b) == 0 and curr_vref != 0):
                         elif (abs(v_b) == 0 and curr_vref != 0):
-
                             # print(time[i],wb_diff,'wb inaccuracy')
                             gainM = Ppred*H.T*inv(H*Ppred*H.T + Rm)
                             gainWB = np.zeros((2,2))   
@@ -631,8 +558,6 @@ class runData:
                         gainWB = np.zeros((2,2))   
                         motor_adj = gainM*(Xobs_m-Xpred)
 
-   
-                
                 elif m_diff > motor_difference_threshold:
                     # print(time[i],m_diff,'Motor Diff')
                     motor_adj = 0
@@ -678,84 +603,85 @@ class runData:
             return kalman_data_frame
 
     def KWB(self,v_refR,v_refL,ds_wbr,ds_wbl,Q,Rwb):
-            thresh = 0.1
-            kalman_data_frame = np.zeros([len(ds_wbl),3])
-            kalman_data_frame = pd.DataFrame(kalman_data_frame, columns=['time','s','vel'])
-            dvL = v_refL['vel'].diff()
-            dvR = v_refR['vel'].diff()
+        '''Kalman filter for filtering between left and right wheelie bar '''
+        thresh = 0.1
+        kalman_data_frame = np.zeros([len(ds_wbl),3])
+        kalman_data_frame = pd.DataFrame(kalman_data_frame, columns=['time','s','vel'])
+        dvL = v_refL['vel'].diff()
+        dvR = v_refR['vel'].diff()
 
-            time = ds_wbl['time']
-            dt = time.diff()
-            v_refL = v_refL['vel']
-            v_refR = v_refR['vel']
+        time = ds_wbl['time']
+        dt = time.diff()
+        v_refL = v_refL['vel']
+        v_refR = v_refR['vel']
 
-            #state = [t s v verr]
-            kalman_data_frame.iloc[:,0] = time
+        #state = [t s v verr]
+        kalman_data_frame.iloc[:,0] = time
 
-            Pprev = Q
-            Xprev = np.matrix([[0],[0]]).astype('float64')
-            for i in range(4,len(ds_wbl)):
-                F = np.matrix([[1,dt[i]],
-                            [0,1]])
-                H = np.matrix([[1,dt[i]],
-                            [0,1]])
-                vprev = Xprev[1]
-                v = vprev+(dvR[i]+dvL[i])/2    
-                Xprev[1] = v
+        Pprev = Q
+        Xprev = np.matrix([[0],[0]]).astype('float64')
+        for i in range(4,len(ds_wbl)):
+            F = np.matrix([[1,dt[i]],
+                        [0,1]])
+            H = np.matrix([[1,dt[i]],
+                        [0,1]])
+            vprev = Xprev[1]
+            v = vprev+(dvR[i]+dvL[i])/2    
+            Xprev[1] = v
 
-                #prediction step
-                Xpred = F*Xprev
-                Ppred = F*Pprev*F.T+Q
+            #prediction step
+            Xpred = F*Xprev
+            Ppred = F*Pprev*F.T+Q
 
-                # set z (observer state) based on encoder values
-                Xobs_l = np.matrix([[Xprev[0,0] + ds_wbl.iloc[i,1]],
-                                    [ds_wbl.iloc[i,1]/dt[i]]]).astype('float64')
-                Xobs_r = np.matrix([[Xprev[0,0] + ds_wbr.iloc[i,1]],
-                                    [ds_wbr.iloc[i,1]/dt[i]]]).astype('float64')
-                
-                if Xobs_l.max() > 100 or Xobs_r.max() > 100:
-                    return kalman_data_frame
-                
-                vl_prev1 = ds_wbl.iloc[i-1,1]/dt[i-1]
-                vl_prev2 = ds_wbl.iloc[i-2,1]/dt[i-2]
-                vl_prev3 = ds_wbl.iloc[i-3,1]/dt[i-3]
-                vl_prev4 = ds_wbl.iloc[i-4,1]/dt[i-4]
-                vr_prev1 = ds_wbr.iloc[i-1,1]/dt[i-1]
-                vr_prev2 = ds_wbr.iloc[i-2,1]/dt[i-2]
-                vr_prev3 = ds_wbr.iloc[i-3,1]/dt[i-3]
-                vr_prev4 = ds_wbr.iloc[i-4,1]/dt[i-4]
-                
+            # set z (observer state) based on encoder values
+            Xobs_l = np.matrix([[Xprev[0,0] + ds_wbl.iloc[i,1]],
+                                [ds_wbl.iloc[i,1]/dt[i]]]).astype('float64')
+            Xobs_r = np.matrix([[Xprev[0,0] + ds_wbr.iloc[i,1]],
+                                [ds_wbr.iloc[i,1]/dt[i]]]).astype('float64')
+            
+            if Xobs_l.max() > 100 or Xobs_r.max() > 100:
+                return kalman_data_frame
+            
+            vl_prev1 = ds_wbl.iloc[i-1,1]/dt[i-1]
+            vl_prev2 = ds_wbl.iloc[i-2,1]/dt[i-2]
+            vl_prev3 = ds_wbl.iloc[i-3,1]/dt[i-3]
+            vl_prev4 = ds_wbl.iloc[i-4,1]/dt[i-4]
+            vr_prev1 = ds_wbr.iloc[i-1,1]/dt[i-1]
+            vr_prev2 = ds_wbr.iloc[i-2,1]/dt[i-2]
+            vr_prev3 = ds_wbr.iloc[i-3,1]/dt[i-3]
+            vr_prev4 = ds_wbr.iloc[i-4,1]/dt[i-4]
+            
 
-                wbl_avg = 0.2*Xobs_l[1]+0.2*vl_prev1+0.2*vl_prev2+0.2*vl_prev3+0.2*vl_prev4
-                wbl_diff = abs(v_refL[i] - wbl_avg)
-                wbr_avg = 0.2*Xobs_r[1]+0.2*vr_prev1+0.2*vr_prev2+0.2*vr_prev3+0.2*vr_prev4
-                wbr_diff = abs(v_refR[i] - wbr_avg)
-                #when left WB slips
-                if wbl_diff > thresh and wbr_diff < thresh:
-                    # print(time[i],"left slip")
-                    gainR = Ppred*H.T*inv(H*Ppred*H.T + Rwb)
-                    gainL = np.zeros((2,2))
+            wbl_avg = 0.2*Xobs_l[1]+0.2*vl_prev1+0.2*vl_prev2+0.2*vl_prev3+0.2*vl_prev4
+            wbl_diff = abs(v_refL[i] - wbl_avg)
+            wbr_avg = 0.2*Xobs_r[1]+0.2*vr_prev1+0.2*vr_prev2+0.2*vr_prev3+0.2*vr_prev4
+            wbr_diff = abs(v_refR[i] - wbr_avg)
+            #when left WB slips
+            if wbl_diff > thresh and wbr_diff < thresh:
+                # print(time[i],"left slip")
+                gainR = Ppred*H.T*inv(H*Ppred*H.T + Rwb)
+                gainL = np.zeros((2,2))
 
-                #when right WB slips
-                elif wbr_diff > thresh and wbl_diff < thresh:
-                    # print(time[i],"right slip")
-                    gainR = np.zeros((2,2))
-                    gainL = Ppred*H.T*inv(H*Ppred*H.T + Rwb)
-                #measurement step
-                else:
-                    gainL = Ppred*H.T*inv(H*Ppred*H.T + Rwb)
-                    gainR = Ppred*H.T*inv(H*Ppred*H.T + Rwb)
+            #when right WB slips
+            elif wbr_diff > thresh and wbl_diff < thresh:
+                # print(time[i],"right slip")
+                gainR = np.zeros((2,2))
+                gainL = Ppred*H.T*inv(H*Ppred*H.T + Rwb)
+            #measurement step
+            else:
+                gainL = Ppred*H.T*inv(H*Ppred*H.T + Rwb)
+                gainR = Ppred*H.T*inv(H*Ppred*H.T + Rwb)
 
-                #multiply gain by difference between measured and predicted
-                Xpred = Xpred + gainR*(Xobs_r-Xpred) + gainL*(Xobs_l-Xpred)
-                Ppred = Ppred - gainR*H*Ppred - gainL*H*Ppred
+            #multiply gain by difference between measured and predicted
+            Xpred = Xpred + gainR*(Xobs_r-Xpred) + gainL*(Xobs_l-Xpred)
+            Ppred = Ppred - gainR*H*Ppred - gainL*H*Ppred
 
-                #increment current to past
-                Xprev = Xpred
-                Pprev = Ppred
+            #increment current to past
+            Xprev = Xpred
+            Pprev = Ppred
 
-                kalman_data_frame.iloc[i,1:3] = Xpred.T
-            return kalman_data_frame
+            kalman_data_frame.iloc[i,1:3] = Xpred.T
+        return kalman_data_frame
 
     def run_Kall_analysis(self,Q,Rm,Rwb,g_scale,section):
         try:
