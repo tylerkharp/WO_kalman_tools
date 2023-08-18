@@ -25,10 +25,10 @@ prevTime = time.time()
 #                       0.20,0,'Terrarium','ft',0)
 # runData = odm.runData('/home/tyler.harp/UTScopeData/20230516-3c4686/raw_run_data/G4-0001_run_0136.csv',
 #                       0.20,0,'Terrarium','ft',0)
-# runData = odm.runData('/home/tyler.harp/UTScopeData/20230522-1ac0e6/raw_run_data/G4-0080_run_0060.csv',
-#                       0.20,0,'Terrarium','ft',0)
-runData = odm.runData('/home/tyler.harp/UTScopeData/20230131-7e2700/raw_run_data/G4-0047_run_0019.csv',
+runData = odm.runData('/home/tyler.harp/UTScopeData/20230522-1ac0e6/raw_run_data/G4-0080_run_0030.csv',
                       0.20,0,'Terrarium','ft',0)
+# runData = odm.runData('/home/tyler.harp/UTScopeData/20230131-7e2700/raw_run_data/G4-0047_run_0019.csv',
+#                       0.20,0,'Terrarium','ft',0)
 prevTime = ct.get_tDiff(prevTime)
 
 runData.getVelocities(span)

@@ -21,6 +21,7 @@ class runData:
         self.units = units
         self.operator_height_offset = operator_height_offset
         self.data = pd.read_csv(data_file_name)
+        self.run_name = data_file_name.split('/')[-1].split('.')[0].upper()
         self.asset_type = asset
         if (asset == 'Cedar' or asset == 'Monti'):
             self.absolute_height_offset = 0
@@ -698,7 +699,7 @@ class runData:
         mpl.plot(self.s_mlb.loc[self.s_mlb['time'] < stopPoint]['time'],self.s_mlb.loc[self.s_mlb['time'] < stopPoint]['s'],label='Left Back Motor')
         mpl.plot(self.s_mlf.loc[self.s_mlf['time'] < stopPoint]['time'],self.s_mlf.loc[self.s_mlf['time'] < stopPoint]['s'],label='Left Front Motor')
         if self.KvcL is not None:
-            mpl.plot(self.KvcL['time'],self.KvcL['s'],label='Left KVC')
+            mpl.plot(self.KvcL['time'],self.KvcL['s'],label='Left Kalman')
         mpl.legend()
         mpl.title('Left: Height vs Time')
         mpl.xlabel('Time (s)')
@@ -714,7 +715,7 @@ class runData:
         mpl.plot(self.s_mrb.loc[self.s_mrb['time'] < stopPoint]['time'],self.s_mrb.loc[self.s_mrb['time'] < stopPoint]['s'],label='Right Back Motor')
         mpl.plot(self.s_mrf.loc[self.s_mrf['time'] < stopPoint]['time'],self.s_mrf.loc[self.s_mrf['time'] < stopPoint]['s'],label='Right Front Motor')
         if self.KvcR is not None:
-            mpl.plot(self.KvcR['time'],self.KvcR['s'],label='Right KVC')
+            mpl.plot(self.KvcR['time'],self.KvcR['s'],label='Right Kalman')
         mpl.legend()
         mpl.title('Right: Height vs Time')
         mpl.xlabel('Time (s)')
@@ -728,7 +729,7 @@ class runData:
         mpl.plot(self.v_mrb['time'],self.v_mrb['vel'],linewidth=0.5,label='Right Back Motor')
         mpl.plot(self.v_mrf['time'],self.v_mrf['vel'],linewidth=0.5,label='Right Front Motor')
         if self.KvcR is not None:
-            mpl.plot(self.KvcR['time'],self.KvcR['vel'],linewidth=0.5,label='Right KVC')
+            mpl.plot(self.KvcR['time'],self.KvcR['vel'],linewidth=0.5,label='Right Kalman')
         mpl.plot(self.v_refR['time'],self.v_refR['vel'],linewidth=1.0,label='Reference Velocity')
         mpl.title('Right: Velocity vs Time')
         mpl.legend()
@@ -743,7 +744,7 @@ class runData:
         mpl.plot(self.v_mlb['time'],self.v_mlb['vel'],linewidth=0.5,label='Left Back Motor')
         mpl.plot(self.v_mlf['time'],self.v_mlf['vel'],linewidth=0.5,label='Left Front Motor')
         if self.KvcL is not None:
-            mpl.plot(self.KvcL['time'],self.KvcL['vel'],linewidth=0.5,label='Left KVC')
+            mpl.plot(self.KvcL['time'],self.KvcL['vel'],linewidth=0.5,label='Left Kalman')
         mpl.plot(self.v_refL['time'],self.v_refL['vel'],linewidth=1.0,label='Reference Velocity')
         mpl.title('Left: Velocity vs Time')
         mpl.legend()
@@ -757,12 +758,12 @@ class runData:
         if self.rts is not None:
             mpl.plot(self.rts['time'],self.rts['s'],label='RTS')
         if self.Kvc is not None:
-            mpl.plot(self.Kvc['time'],self.Kvc['s'],label='KVC')
+            mpl.plot(self.Kvc['time']+2.0,self.Kvc['s'],label='Kalman')
         # if self.RC_position is not None:
         #     mpl.plot(self.RC_position['time'],self.RC_position['s'],label='RC Position')
         mpl.plot(self.s_wbr['time'],self.s_wbr['s'],label='Right Wheelie Bar')
         mpl.plot(self.s_wbl['time'],self.s_wbl['s'],label='Left Wheelie Bar')
-        mpl.title('Height vs Time')
+        mpl.title(self.run_name + ' Height vs Time')
         mpl.legend()
         mpl.xlabel('Time (s)')
         if self.units == 'm':
@@ -778,9 +779,9 @@ class runData:
         initial_offset = RTS_down['s'].iloc[0] - Kvc_down['s'].iloc[0]
         Kvc_down['s'] = Kvc_down['s'] + initial_offset
         mpl.plot(RTS_down['time'],RTS_down['s'],label='RTS')
-        mpl.plot(Kvc_down['time'],Kvc_down['s'],label='KVC')
+        mpl.plot(Kvc_down['time'],Kvc_down['s'],label='Kalman')
 
-        mpl.title('Height vs Time')
+        mpl.title(self.run_name + ' Height vs Time')
         mpl.legend()
         mpl.xlabel('Time (s)')
         if self.units == 'm':
@@ -792,10 +793,10 @@ class runData:
         if self.rts is not None:
             mpl.plot(self.rts['time'],self.rts['s'],label='RTS')
         if self.Kvc is not None:
-            mpl.plot(self.Kvc['time'],self.Kvc['s'],label='KVC')
+            mpl.plot(self.Kvc['time'],self.Kvc['s'],label='Kalman')
         mpl.plot(self.s_wbr['time'],self.s_wbr['s'],label='Right Wheelie Bar')
         mpl.plot(self.s_wbl['time'],self.s_wbl['s'],label='Left Wheelie Bar')
-        mpl.title('Height vs Time')
+        mpl.title(self.run_name + ' Height vs Time')
         mpl.legend()
         mpl.xlabel('Time (s)')
         if self.units == 'm':
